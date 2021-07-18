@@ -1,5 +1,7 @@
 //import styled from 'styled-components'
 import React from 'react';
+import nookies from 'nookies';
+import jwt from 'jsonwebtoken';
 import MainGrid from '../src/components/MainGrid';
 import Box from '../src/components/Box';
 import { AlurakutMenu, AlurakutProfileSidebarMenuDefault, OrkutNostalgicIconSet } from '../src/lib/AlurakutCommons';
@@ -57,8 +59,8 @@ function ProfileRelationsBox(propriedades) {
 }
 
 
-export default function Home() {
-  const usuarioAleatorio = 'VINICIOMIRANDA';
+export default function Home(props) {
+  const usuarioAleatorio = props.githubUser;
   const [comunidades, setComunidades] = React.useState([{
 
     //   id: '12313213213',
@@ -72,7 +74,7 @@ export default function Home() {
 
 
   ]);
-  const githubUser = 'VINICIOMIRANDA';
+  //const githubUser = githubUser;
   //  const comunidades = ['Alurakut','Alurakut'];
   //  const comunidades = comunidades[0];
   //  const alteradorDeComunidades = comunidades[1];
@@ -131,7 +133,7 @@ export default function Home() {
       <MainGrid>
 
         <div className="profileArea" style={{ gridArea: 'profileArea' }}>
-          <ProfileSideBar githubUser={githubUser} />
+          <ProfileSideBar githubUser={usuarioAleatorio} />
         </div>
 
         <div className="welcomeArea" style={{ gridArea: 'welcomeArea' }}>
@@ -254,4 +256,34 @@ export default function Home() {
       </MainGrid>
     </>
   )
+}
+
+export async function getServerSideProps(context) {
+  const cookies = nookies.get(context);
+  const token = cookies.USER_TOKEN;
+  const { isAuthenticated } = await fetch('https://alurakut.vercel.app/api/auth', {
+    headers: {
+        Authorization: token
+      }
+  })
+  .then((resposta) => resposta.json())
+
+  if(!isAuthenticated) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      }
+    }
+  }
+  const { githubUser } = jwt.decode(token);
+
+  console.log('TOKEN DECODIFICADO', jwt.decode(token))
+ 
+  return {
+    props: {
+
+      githubUser
+    }, // will be passed to the page component as props
+  }
 }
